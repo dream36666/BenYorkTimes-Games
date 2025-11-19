@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordle Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .mode-selection {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .mode-btn {
+            padding: 15px 30px;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-weight: 600;
+        }
+
+        .mode-btn.daily {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .mode-btn.infinite {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .stats {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .stats h3 {
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .game-board {
+            display: none;
+        }
+
+        .game-board.active {
+            display: block;
+        }
+
+        .board {
+            display: grid;
+            grid-template-rows: repeat(6, 1fr);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+        }
+
+        .tile {
+            width: 100%;
+            aspect-ratio: 1;
+            border: 2px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .tile.filled {
+            border-color: #888;
+            animation: pop 0.1s;
+        }
+
+        .tile.correct {
+            background: #6aaa64;
+            color: white;
+            border-color: #6aaa64;
+        }
+
+        .tile.present {
+            background: #c9b458;
+            color: white;
+            border-color: #c9b458;
+        }
+
+        .tile.absent {
+            background: #787c7e;
+            color: white;
+            border-color: #787c7e;
+        }
+
+        @keyframes pop {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .keyboard {
+            display: grid;
+            grid-template-rows: repeat(3, 1fr);
+            gap: 5px;
+        }
+
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .key {
+            padding: 15px;
+            min-width: 40px;
+            background: #d3d6da;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .key:hover {
+            background: #bbb;
+        }
+
+        .key.wide {
+            min-width: 60px;
+            font-size: 12px;
+        }
+
+        .key.correct {
+            background: #6aaa64;
+            color: white;
+        }
+
+        .key.present {
+            background: #c9b458;
+            color: white;
+        }
+
+        .key.absent {
+            background: #787c7e;
+            color: white;
+        }
+
+        .message {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 18px;
+            font-weight: bold;
+            min-height: 30px;
+        }
+
+        .message.success {
+            color: #6aaa64;
+        }
+
+        .message.error {
+            color: #c9b458;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Home</a>
+        
+        <h1>Wordle</h1>
+
+        <div id="modeSelection" class="mode-selection">
+            <button class="mode-btn daily" id="dailyBtn">Daily Wordle</button>
+            <button class="mode-btn infinite" id="infiniteBtn">Infinite Wordle</button>
+        </div>
+
+        <div id="stats" class="stats hidden">
+            <h3 id="statsTitle">Daily Wordle Stats</h3>
+            <div class="stat-row">
+                <div class="stat-item">
+                    <div class="stat-value" id="wins">0</div>
+                    <div class="stat-label">Wins</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="losses">0</div>
+                    <div class="stat-label">Losses</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="average">0</div>
+                    <div class="stat-label">Avg Guesses</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="gameBoard" class="game-board">
+            <div class="message" id="message"></div>
+            
+            <div class="board" id="board"></div>
+            
+            <div class="keyboard" id="keyboard"></div>
+
+            <div class="controls">
+                <button class="btn btn-primary" id="newGameBtn">New Game</button>
+                <button class="btn btn-secondary" id="backBtn">Back to Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURATION: Replace with your Google Apps Script Web App URL
+        const SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+        
+        let currentUser = null;
+        let gameMode = null; // 'daily' or 'infinite'
+        let targetWord = '';
+        let currentRow = 0;
+        let currentTile = 0;
+        let gameOver = false;
+        let validWords = [];
+        let keyboardState = {};
+
+        const keyboard = [
+            ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+            ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+            ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'BACK']
+        ];
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', async () => {
+            const savedUser = localStorage.getItem('currentUser');
+            if (!savedUser) {
+                window.location.href = 'index.html';
+                return;
+            }
+            currentUser = JSON.parse(savedUser);
+            
+            // Load word list
+            await loadWordList();
+            
+            createBoard();
+            createKeyboard();
+            setupEventListeners();
+        });
+
+        async function loadWordList() {
+            try {
+                const response = await fetch('words.txt');
+                const text = await response.text();
+                validWords = text.split('\n').map(w => w.trim().toUpperCase()).filter(w => w.length === 5);
+            } catch (error) {
+                console.error('Error loading word list:', error);
+                validWords = [];
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('dailyBtn').addEventListener('click', () => startGame('daily'));
+            document.getElementById('infiniteBtn').addEventListener('click', () => startGame('infinite'));
+            document.getElementById('newGameBtn').addEventListener('click', () => startGame(gameMode));
+            document.getElementById('backBtn').addEventListener('click', showModeSelection);
+            
+            document.addEventListener('keydown', handleKeyPress);
+        }
+
+        async function startGame(mode) {
+            gameMode = mode;
+            document.getElementById('modeSelection').classList.add('hidden');
+            document.getElementById('gameBoard').classList.add('active');
+            document.getElementById('stats').classList.remove('hidden');
+            
+            if (mode === 'daily') {
+                document.getElementById('statsTitle').textContent = 'Daily Wordle Stats';
+                await loadDailyWord();
+                await loadStats();
+            } else {
+                document.getElementById('statsTitle').textContent = 'Infinite Mode';
+                document.getElementById('stats').classList.add('hidden');
+                loadRandomWord();
+            }
+            
+            resetGame();
+        }
+
+        async function loadDailyWord() {
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getDailyWord`);
+                const data = await response.json();
+                if (data.success) {
+                    targetWord = data.word.toUpperCase();
+                } else {
+                    showMessage('Error loading daily word', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading daily word:', error);
+                showMessage('Error connecting to server', 'error');
+            }
+        }
+
+        function loadRandomWord() {
+            if (validWords.length > 0) {
+                targetWord = validWords[Math.floor(Math.random() * validWords.length)];
+            } else {
+                // Fallback words if file not loaded
+                const fallbackWords = ['REACT', 'WORDS', 'GUESS', 'MATCH', 'LEARN'];
+                targetWord = fallbackWords[Math.floor(Math.random() * fallbackWords.length)];
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=getStats&username=${encodeURIComponent(currentUser.username)}`);
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('wins').textContent = data.stats.wins || 0;
+                    document.getElementById('losses').textContent = data.stats.losses || 0;
+                    document.getElementById('average').textContent = data.stats.average ? data.stats.average.toFixed(1) : '0';
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        function createBoard() {
+            const board = document.getElementById('board');
+            for (let i = 0; i < 6; i++) {
+                const row = document.createElement('div');
+                row.className = 'row';
+                for (let j = 0; j < 5; j++) {
+                    const tile = document.createElement('div');
+                    tile.className = 'tile';
+                    tile.id = `tile-${i}-${j}`;
+                    row.appendChild(tile);
+                }
+                board.appendChild(row);
+            }
+        }
+
+        function createKeyboard() {
+            const keyboardDiv = document.getElementById('keyboard');
+            keyboard.forEach(row => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'keyboard-row';
+                row.forEach(key => {
+                    const button = document.createElement('button');
+                    button.className = key.length > 1 ? 'key wide' : 'key';
+                    button.textContent = key;
+                    button.addEventListener('click', () => handleKey(key));
+                    button.id = `key-${key}`;
+                    rowDiv.appendChild(button);
+                });
+                keyboardDiv.appendChild(rowDiv);
+            });
+        }
+
+        function handleKeyPress(e) {
+            if (gameOver) return;
+            
+            const key = e.key.toUpperCase();
+            if (/^[A-Z]$/.test(key)) {
+                handleKey(key);
+            } else if (key === 'ENTER') {
+                handleKey('ENTER');
+            } else if (key === 'BACKSPACE') {
+                handleKey('BACK');
+            }
+        }
+
+        function handleKey(key) {
+            if (gameOver) return;
+            
+            if (key === 'ENTER') {
+                submitGuess();
+            } else if (key === 'BACK') {
+                deleteLetter();
+            } else if (currentTile < 5) {
+                addLetter(key);
+            }
+        }
+
+        function addLetter(letter) {
+            const tile = document.getElementById(`tile-${currentRow}-${currentTile}`);
+            tile.textContent = letter;
+            tile.classList.add('filled');
+            currentTile++;
+        }
+
+        function deleteLetter() {
+            if (currentTile > 0) {
+                currentTile--;
+                const tile = document.getElementById(`tile-${currentRow}-${currentTile}`);
+                tile.textContent = '';
+                tile.classList.remove('filled');
+            }
+        }
+
+        async function submitGuess() {
+            if (currentTile < 5) {
+                showMessage('Not enough letters', 'error');
+                return;
+            }
+
+            let guess = '';
+            for (let i = 0; i < 5; i++) {
+                const tile = document.getElementById(`tile-${currentRow}-${i}`);
+                guess += tile.textContent;
+            }
+
+            if (validWords.length > 0 && !validWords.includes(guess)) {
+                showMessage('Not in word list', 'error');
+                return;
+            }
+
+            checkGuess(guess);
+            
+            if (guess === targetWord) {
+                gameOver = true;
+                showMessage('Congratulations! 🎉', 'success');
+                if (gameMode === 'daily') {
+                    await saveScore(currentRow + 1);
+                }
+            } else if (currentRow === 5) {
+                gameOver = true;
+                showMessage(`Game Over! The word was ${targetWord}`, 'error');
+                if (gameMode === 'daily') {
+                    await saveScore(0);
+                }
+            } else {
+                currentRow++;
+                currentTile = 0;
+            }
+        }
+
+        function checkGuess(guess) {
+            const letterCount = {};
+            for (let letter of targetWord) {
+                letterCount[letter] = (letterCount[letter] || 0) + 1;
+            }
+
+            // First pass: mark correct letters
+            for (let i = 0; i < 5; i++) {
+                const tile = document.getElementById(`tile-${currentRow}-${i}`);
+                const letter = guess[i];
+                
+                if (letter === targetWord[i]) {
+                    tile.classList.add('correct');
+                    updateKeyboard(letter, 'correct');
+                    letterCount[letter]--;
+                }
+            }
+
+            // Second pass: mark present/absent letters
+            for (let i = 0; i < 5; i++) {
+                const tile = document.getElementById(`tile-${currentRow}-${i}`);
+                const letter = guess[i];
+                
+                if (letter !== targetWord[i]) {
+                    if (targetWord.includes(letter) && letterCount[letter] > 0) {
+                        tile.classList.add('present');
+                        updateKeyboard(letter, 'present');
+                        letterCount[letter]--;
+                    } else {
+                        tile.classList.add('absent');
+                        updateKeyboard(letter, 'absent');
+                    }
+                }
+            }
+        }
+
+        function updateKeyboard(letter, state) {
+            const key = document.getElementById(`key-${letter}`);
+            if (!key) return;
+            
+            const currentState = keyboardState[letter];
+            if (currentState === 'correct') return;
+            if (currentState === 'present' && state === 'absent') return;
+            
+            key.classList.remove('correct', 'present', 'absent');
+            key.classList.add(state);
+            keyboardState[letter] = state;
+        }
+
+        async function saveScore(guesses) {
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=saveScore&username=${encodeURIComponent(currentUser.username)}&guesses=${guesses}`);
+                const data = await response.json();
+                if (data.success) {
+                    await loadStats();
+                }
+            } catch (error) {
+                console.error('Error saving score:', error);
+            }
+        }
+
+        function resetGame() {
+            currentRow = 0;
+            currentTile = 0;
+            gameOver = false;
+            keyboardState = {};
+            
+            // Clear board
+            for (let i = 0; i < 6; i++) {
+                for (let j = 0; j < 5; j++) {
+                    const tile = document.getElementById(`tile-${i}-${j}`);
+                    tile.textContent = '';
+                    tile.className = 'tile';
+                }
+            }
+            
+            // Clear keyboard
+            keyboard.flat().forEach(key => {
+                const keyEl = document.getElementById(`key-${key}`);
+                if (keyEl) {
+                    keyEl.classList.remove('correct', 'present', 'absent');
+                }
+            });
+            
+            showMessage('', '');
+        }
+
+        function showModeSelection() {
+            document.getElementById('modeSelection').classList.remove('hidden');
+            document.getElementById('gameBoard').classList.remove('active');
+            document.getElementById('stats').classList.add('hidden');
+            gameMode = null;
+        }
+
+        function showMessage(msg, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = msg;
+            messageDiv.className = `message ${type}`;
+            if (msg) {
+                setTimeout(() => {
+                    if (messageDiv.textContent === msg) {
+                        messageDiv.textContent = '';
+                        messageDiv.className = 'message';
+                    }
+                }, 2000);
+            }
+        }
+    </script>
+</body>
+</html>
