@@ -2390,6 +2390,7 @@ jetty
 equip
 leper
 slink
+soare
 soars
 cater
 dowry
@@ -2511,6 +2512,7 @@ pinks
 shalt
 toots
 glens
+glent
 cooed
 rusts
 stews
@@ -3047,6 +3049,7 @@ perks
 limps
 wombs
 blurb
+waqfs
 daubs
 cokes
 sours
@@ -3724,6 +3727,7 @@ honed
 annas
 coypu
 shims
+zovhd
 zowie
 jihad
 savvy
