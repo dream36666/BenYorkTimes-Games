@@ -366,7 +366,13 @@
         function setupEventListeners() {
             document.getElementById('dailyBtn').addEventListener('click', () => startGame('daily'));
             document.getElementById('infiniteBtn').addEventListener('click', () => startGame('infinite'));
-            document.getElementById('newGameBtn').addEventListener('click', () => startGame(gameMode));
+            document.getElementById('newGameBtn').addEventListener('click', () => {
+                if (gameMode === 'daily') {
+                    showMessage('Daily word already set. Come back tomorrow!', 'error');
+                } else {
+                    startGame(gameMode);
+                }
+            });
             document.getElementById('backBtn').addEventListener('click', showModeSelection);
             
             document.addEventListener('keydown', handleKeyPress);
@@ -382,6 +388,14 @@
                 document.getElementById('statsTitle').textContent = 'Daily Wordle Stats';
                 await loadDailyWord();
                 await loadStats();
+                
+                // Check if user already played today
+                const playedToday = await checkIfPlayedToday();
+                if (playedToday) {
+                    showMessage('You already played today! Come back tomorrow.', 'error');
+                    gameOver = true;
+                    return;
+                }
             } else {
                 document.getElementById('statsTitle').textContent = 'Infinite Mode';
                 document.getElementById('stats').classList.add('hidden');
@@ -427,6 +441,17 @@
                 }
             } catch (error) {
                 console.error('Error loading stats:', error);
+            }
+        }
+
+        async function checkIfPlayedToday() {
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=checkPlayedToday&username=${encodeURIComponent(currentUser.username)}`);
+                const data = await response.json();
+                return data.played;
+            } catch (error) {
+                console.error('Error checking if played today:', error);
+                return false;
             }
         }
 
