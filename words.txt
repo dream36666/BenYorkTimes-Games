@@ -17,6 +17,7 @@ think
 three
 years
 place
+aeiou
 sound
 great
 again
